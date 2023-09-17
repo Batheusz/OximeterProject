@@ -47,7 +47,7 @@ TwoWire I2C_Oxi = TwoWire(0);
 #define RATESIZE 100
 
 // Pino do botão de trigger
-#define BTT 15
+#define BTT 16
 
 // Declaração de variáveis
 float temp = 0.0;
@@ -57,6 +57,7 @@ int32_t spo2;
 int8_t validsSpo2;
 int32_t heartRate;
 int8_t validHeartRate;
+uint8_t flag = 0;
 
 // Declaração de funções
 void drawText(char* text, uint8_t x, uint8_t y, uint16_t color, uint8_t size);
@@ -102,14 +103,14 @@ void setup() {
   drawText("Pressione o",3 ,10 , ST7735_WHITE, 2);
   drawText("botao",3 ,30 , ST7735_WHITE, 2);
   vTaskDelay(500);
-  MyLCD.fillScreen(ST7735_BLACK);
-  drawText("Posicione o",3 ,10 , ST7735_WHITE, 2);
-  drawText("dedo",3 ,30 , ST7735_WHITE, 2);
-  MyOxi.setup(BRILHO,SAMPLEAVAREGE, MODE, SAMPLERATE, PULSEWIDTH, ADCRANGE);
-  vTaskDelay(500);
+  // MyLCD.fillScreen(ST7735_BLACK);
+  // drawText("Posicione o",3 ,10 , ST7735_WHITE, 2);
+  // drawText("dedo",3 ,30 , ST7735_WHITE, 2);
+  // MyOxi.setup(BRILHO,SAMPLEAVAREGE, MODE, SAMPLERATE, PULSEWIDTH, ADCRANGE);
+  // vTaskDelay(500);
 
   // Definindo interrupt
-  // attachInterrupt(BTT, bttTrigg, HIGH);
+  attachInterrupt(BTT, bttTrigg, RISING);
 
   // MyLCD.fillScreen(ST7735_BLACK);
   // drawHeart();
@@ -118,10 +119,15 @@ void setup() {
   // drawSpO2(100, ST7735_WHITE);
   // drawTemp(99.9,ST7735_WHITE);
   // drawBPM(300,ST7735_WHITE);
-  oxiRead();
+  // oxiRead();
 }
 
+
 void loop() {
+  if(flag == 1)
+    oxiRead();
+  flag = 0;
+  vTaskDelay(1000);
 }
 /**************************************************************************/
 /*!
@@ -130,7 +136,7 @@ void loop() {
 /**************************************************************************/
 void bttTrigg()
 {
-  oxiRead();
+  flag = 1;
 }
 /**************************************************************************/
 /*!
@@ -259,10 +265,14 @@ uint8_t oxiRead()
 {
   // portDISABLE_INTERRUPTS();
   MyLCD.fillScreen(ST7735_BLACK);
+  drawText("Posicione o",3 ,10 , ST7735_WHITE, 2);
+  drawText("dedo",3 ,30 , ST7735_WHITE, 2);
+  MyOxi.setup(BRILHO,SAMPLEAVAREGE, MODE, SAMPLERATE, PULSEWIDTH, ADCRANGE);
+  vTaskDelay(1000*DELAYREAD);
+  MyLCD.fillScreen(ST7735_BLACK);
   drawHeart();
   drawOxi();
   drawTermometer();
-  vTaskDelay(1000*DELAYREAD);
   byte j = 3;
   while (j)
   {
